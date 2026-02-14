@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/theme/app_theme.dart';
-import 'features/dashboard/presentation/dashboard_screen.dart';
+import 'home_screen.dart';
 
 void main() {
   runApp(
@@ -20,7 +20,7 @@ class OminiFlowApp extends StatelessWidget {
       title: 'OminiFlow',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.getDarkTheme('lash_studio'),
-      home: const DashboardScreen(),
+      home: const HomeScreen(),
     );
   }
 }
