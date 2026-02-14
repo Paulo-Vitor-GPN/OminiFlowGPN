@@ -19,7 +19,7 @@ class _HomeScreenState extends State<HomeScreen> {
     DashboardScreen(),
     SchedulingScreen(),
     InventoryScreen(),
-    // PaymentsScreen(), // Will be added later
+    PaymentsScreen(),
   ];
 
   void _onItemTapped(int index) {
