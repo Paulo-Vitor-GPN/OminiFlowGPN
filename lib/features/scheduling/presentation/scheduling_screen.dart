@@ -93,8 +93,8 @@ class _SchedulingScreenState extends State<SchedulingScreen> {
             fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
-          leftIcon: Icon(Icons.chevron_left, color: AppTheme.textPrimary),
-          rightIcon: Icon(Icons.chevron_right, color: AppTheme.textPrimary),
+          leftChevronIcon: Icon(Icons.chevron_left, color: AppTheme.textPrimary),
+          rightChevronIcon: Icon(Icons.chevron_right, color: AppTheme.textPrimary),
         ),
       ),
     );

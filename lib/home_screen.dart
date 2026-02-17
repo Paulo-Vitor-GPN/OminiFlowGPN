@@ -3,6 +3,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'features/dashboard/presentation/dashboard_screen.dart';
 import 'features/scheduling/presentation/scheduling_screen.dart';
 import 'features/inventory/presentation/inventory_screen.dart';
+import 'features/payments/presentation/payments_screen.dart';
 import 'core/theme/app_theme.dart';
 
 class HomeScreen extends StatefulWidget {
