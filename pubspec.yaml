@@ -11,28 +11,37 @@ dependencies:
   flutter:
     sdk: flutter
 
+  # --- UI & Assets ---
   cupertino_icons: ^1.0.8
-  google_fonts: ^4.0.4
-  http: ^0.13.6
+  google_fonts: ^6.2.1       # CORRIGIDO: Typo removido e versão atualizada
+  glassmorphism: ^3.0.0
+  animations: ^2.0.11
+  font_awesome_flutter: ^10.7.0 # Adicionado ^ para aceitar patches
+  fl_chart: ^0.69.0            # Adicionado ^ para aceitar patches
+
+  # --- Utilitários & Lógica ---
+  intl: ^0.20.2
+  table_calendar: ^3.1.2
+  
+  # --- Networking & Pagamentos ---
+  http: ^1.2.1               # CORRIGIDO: Atualizado para versão moderna (Resolve o conflito)
+  url_launcher: ^6.3.0       # ADICIONADO: Essencial para abrir o link do Mercado Pago
+  flutter_stripe: ^11.5.0    # Mantido (Compatível com http moderno)
+
+  # --- Gerenciamento de Estado ---
   flutter_riverpod: ^2.6.1
   riverpod_annotation: ^2.6.1
-  glassmorphism: ^3.0.0
-  intl: ^0.20.2
-  fl_chart: 0.69.0
-  flutter_stripe: ^11.5.0
-  mercadopago_sdk: ^1.3.0
-  animations: ^2.0.11
-  font_awesome_flutter: 10.7.0
-  table_calendar: ^3.1.2
-
-dependency_overrides:
-  google_fonts: 4.0.4
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
 
   flutter_lints: ^5.0.0
+  
+  # --- Geradores de Código (Riverpod) ---
+  # ADICIONADO: Necessários para que o riverpod_annotation funcione
+  build_runner: ^2.4.11
+  riverpod_generator: ^2.6.1
 
 flutter:
   uses-material-design: true

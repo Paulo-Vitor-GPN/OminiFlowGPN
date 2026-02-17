@@ -1,96 +1,130 @@
-import 'package:flutter_stripe/flutter_stripe.dart';
-import 'package:mercadopago_sdk/mercadopago_sdk.dart';
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
+import 'package:http/http.dart' as http;
+import 'package:url_launcher/url_launcher.dart';
 
 class PaymentService {
-  // Initialize Stripe (replace with your publishable key)
+  // ---------------------------------------------------------------------------
+  // CONFIGURAÇÃO
+  // ---------------------------------------------------------------------------
+
+  // Em Produção: NUNCA mantenha o Access Token no código cliente.
+  // Mova isso para variáveis de ambiente (--dart-define) ou busque do seu backend.
+  static const String _mpAccessToken = 'TEST-seu-access-token-aqui';
+
   static void initStripe(String publishableKey) {
     Stripe.publishableKey = publishableKey;
   }
 
-  // Initialize Mercado Pago (replace with your public key)
-  static void initMercadoPago(String publicKey) {
-    // MercadoPagoSDK.setPublicKey(publicKey);
-    // The above line is commented out because the mercadopago_sdk package
-    // does not have a direct static method for setting the public key
-    // like Stripe. It's usually handled when creating a new instance
-    // or through backend integration.
-    debugPrint('Mercado Pago Public Key: $publicKey');
+  // Não precisamos mais de initMercadoPago com chave pública para esta abordagem
+  // pois usaremos a API de Preferências (Checkout Pro) via HTTP.
+
+  // ---------------------------------------------------------------------------
+  // MERCADO PAGO (Integração via API REST - Sem SDK)
+  // ---------------------------------------------------------------------------
+
+  /// Cria uma preferência de pagamento e redireciona o usuário para o Checkout.
+  ///
+  /// Fluxo:
+  /// 1. Monta o JSON da preferência.
+  /// 2. Envia POST para a API do Mercado Pago (usando http ^1.x).
+  /// 3. Recebe a URL de checkout (init_point).
+  /// 4. Abre o navegador/webview para o usuário pagar.
+  Future<bool> processMercadoPagoCheckout({
+    required String title,
+    required double amount,
+    required String currencyId, // 'BRL'
+    required String userEmail,
+  }) async {
+    final url = Uri.parse('https://api.mercadopago.com/checkout/preferences');
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Authorization': 'Bearer $_mpAccessToken',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          "items": [
+            {
+              "title": title,
+              "quantity": 1,
+              "currency_id": currencyId,
+              "unit_price": amount,
+            }
+          ],
+          "payer": {"email": userEmail},
+          // URLs para onde o usuário volta após pagar
+          "back_urls": {
+            "success": "https://ominiflow.app/success",
+            "failure": "https://ominiflow.app/failure",
+            "pending": "https://ominiflow.app/pending"
+          },
+          "auto_return": "approved",
+        }),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = jsonDecode(response.body);
+
+        // init_point: URL para produção
+        // sandbox_init_point: URL para testes
+        final checkoutUrl = data['init_point'] as String;
+
+        debugPrint('Preferência criada. Abrindo checkout: $checkoutUrl');
+
+        // Abre o link no navegador (Chrome) ou Webview
+        final uri = Uri.parse(checkoutUrl);
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri,
+              mode: LaunchMode.externalApplication); // Melhor para SaaS Web
+          return true; // Retorna true indicando que o fluxo iniciou
+        } else {
+          debugPrint('Não foi possível abrir a URL: $checkoutUrl');
+          return false;
+        }
+      } else {
+        debugPrint('Erro MP: ${response.statusCode} - ${response.body}');
+        return false;
+      }
+    } catch (e) {
+      debugPrint('Exceção ao processar Mercado Pago: $e');
+      return false;
+    }
   }
 
-  // Simulate a Pix payment (for demonstration)
-  Future<bool> processPixPayment(double amount, String description) async {
-    // In a real application, this would involve calling a backend API
-    // that interacts with a Pix payment gateway (e.g., Mercado Pago, Stripe).
-    // For now, we'll simulate success.
-    await Future.delayed(const Duration(seconds: 2));
-    debugPrint('Simulating Pix payment for $amount: $description');
-    return true; // Simulate successful payment
-  }
+  // ---------------------------------------------------------------------------
+  // STRIPE (Mantido com flutter_stripe)
+  // ---------------------------------------------------------------------------
 
-  // Simulate a subscription payment (for demonstration)
-  Future<bool> processSubscription(String planId, double amount) async {
-    // Similar to Pix, this would involve backend calls for subscription management.
-    await Future.delayed(const Duration(seconds: 2));
-    debugPrint('Simulating subscription for plan $planId with amount $amount');
-    return true; // Simulate successful subscription
-  }
-
-  // Placeholder for Stripe payment processing
   Future<bool> processStripePayment(double amount, String currency) async {
     try {
-      // 1. Create a PaymentIntent on your backend
-      // This step is crucial and requires a backend to securely handle API keys.
-      // For demonstration, we'll skip the actual backend call.
-      // final response = await http.post(
-      //   Uri.parse('YOUR_BACKEND_URL/create-payment-intent'),
-      //   body: json.encode({
-      //     'amount': (amount * 100).toInt(), // amount in cents
-      //     'currency': currency,
-      //   }),
-      //   headers: {'Content-Type': 'application/json'},
-      // );
-      // final jsonResponse = json.decode(response.body);
-      // final clientSecret = jsonResponse['clientSecret'];
+      // Passo 1: Obter Client Secret do seu Backend (Simulado)
+      // O 'http' aqui já será a versão moderna compatível com todo o projeto.
+      // final response = await http.post(...)
 
-      // 2. Initialize the payment sheet
+      // Simulação de dados para exemplo
+      const clientSecret = 'sk_test_...';
+
       await Stripe.instance.initPaymentSheet(
         paymentSheetParameters: SetupPaymentSheetParameters(
           merchantDisplayName: 'OminiFlow',
-          paymentIntentClientSecret: 'sk_test_51P70a9Fj...',
-          // Replace with a valid client secret from your backend
-          customerEphemeralKeySecret: 'ek_test_YW...',
-          // Replace with a valid ephemeral key from your backend
-          customerId: 'cus_Q0...',
-          // Replace with a valid customer ID from your backend
+          paymentIntentClientSecret: clientSecret,
           style: ThemeMode.dark,
           currencyCode: currency,
         ),
       );
 
-      // 3. Display the payment sheet
       await Stripe.instance.presentPaymentSheet();
-
-      // 4. Confirm payment (handled automatically by presentPaymentSheet for most cases)
       debugPrint('Stripe Payment successful');
       return true;
-    } catch (e) {
-      debugPrint('Error processing Stripe payment: $e');
+    } on StripeException catch (e) {
+      debugPrint('Erro Stripe: ${e.error.localizedMessage}');
       return false;
-    }
-  }
-
-  // Placeholder for Mercado Pago payment processing
-  Future<bool> processMercadoPagoPayment(double amount, String description) async {
-    try {
-      // Similar to Stripe, Mercado Pago integration often involves a backend
-      // to create preferences and handle notifications securely.
-      // For now, we'll simulate success.
-      await Future.delayed(const Duration(seconds: 2));
-      debugPrint('Simulating Mercado Pago payment for $amount: $description');
-      return true;
     } catch (e) {
-      debugPrint('Error processing Mercado Pago payment: $e');
+      debugPrint('Erro genérico Stripe: $e');
       return false;
     }
   }
